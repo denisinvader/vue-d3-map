@@ -7,6 +7,8 @@
     "build": "vue-cli-service build"
   },
   "dependencies": {
+    "d3": "^5.7.0",
+    "d3-tile": "^0.0.4",
     "vue": "^2.5.17"
   },
   "devDependencies": {
