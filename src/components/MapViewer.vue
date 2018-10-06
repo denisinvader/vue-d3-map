@@ -19,13 +19,20 @@ export default {
     return {
       width: 0,
       height: 0,
+
+      translateX: 0,
+      translateY: 0,
+
+      touchStarted: false,
+      touchLastX: 0,
+      touchLastY: 0,
     };
   },
   computed: {
     projection () {
       return d3.geoMercator()
         .scale(+this.scale / (2 * Math.PI))
-        .translate([this.width / 2, this.height / 2])
+        .translate([this.translateX, this.translateY])
         .center(this.center)
       ;
     },
@@ -42,6 +49,28 @@ export default {
 
     this.width = rect.width;
     this.height = rect.height;
+    this.translateX = this.width / 2;
+    this.translateY = this.height / 2;
+  },
+  methods: {
+    onTouchStart (e) {
+      this.touchStarted = true;
+
+      this.touchLastX = e.clientX;
+      this.touchLastY = e.clientY;
+    },
+    onTouchEnd () {
+      this.touchStarted = false;
+    },
+    onTouchMove (e) {
+      if (this.touchStarted) {
+        this.translateX = this.translateX + e.clientX - this.touchLastX;
+        this.translateY = this.translateY + e.clientY - this.touchLastY;
+
+        this.touchLastX = e.clientX;
+        this.touchLastY = e.clientY;
+      }
+    },
   },
   render () {
     if (this.width <= 0 || this.height <= 0) {
@@ -50,10 +79,17 @@ export default {
 
     return (
       <div class="map">
-        <svg viewBox={`0 0 ${this.width} ${this.height}`}>
+        <svg
+          viewBox={`0 0 ${this.width} ${this.height}`}
+          onMousedown={this.onTouchStart}
+          onMousemove={this.onTouchMove}
+          onMouseup={this.onTouchEnd}
+          onMouseleave={this.onTouchEnd}
+        >
           <g>
             {this.tiles.map(t => (
               <image
+                class="map__tile"
                 key={`${t.x}_${t.y}_${t.z}`}
                 xlinkHref={`https://a.tile.openstreetmap.org/${t.z}/${t.x}/${t.y}.png `}
                 x={(t.x + this.tiles.translate[0]) * this.tiles.scale}
@@ -86,6 +122,9 @@ export default {
   height: 100%;
   font-family: Arial, sans, sans-serif;
 
+  &__tile {
+    pointer-events: none;
+  }
   &__copyright {
     position: absolute;
     bottom: 8px;
